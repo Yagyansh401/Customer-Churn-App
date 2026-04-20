@@ -3,113 +3,86 @@ import pandas as pd
 import pickle
 import time
 
-# ==========================================
-# 1. PAGE CONFIGURATION & METADATA
-# ==========================================
+# ---------------- PAGE CONFIG ----------------
 st.set_page_config(
-    page_title="Travel Churn Predictor | Enterprise AI",
-    page_icon="🛫",
+    page_title="Travel Churn Predictor",
+    page_icon="✈️",
     layout="wide",
-    initial_sidebar_state="expanded"
 )
 
-# ==========================================
-# 2. PREMIUM CSS & GLASSMORPHISM INJECTION
-# ==========================================
+# ---------------- MODERN UI CSS ----------------
 st.markdown("""
-    <style>
-    /* Import modern SaaS font */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+<style>
 
-    /* Global Typography and Background */
-    html, body, [class*="css"]  {
-        font-family: 'Inter', sans-serif;
-    }
-    
-    /* Modern Gradient Background */
-    .stApp {
-        background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
-    }
+/* Background */
+.stApp {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #F1F5F9;
+}
 
-    /* Top Padding Adjustment */
-    .block-container {
-        padding-top: 2rem !important;
-        padding-bottom: 2rem !important;
-    }
+/* Glass container */
+.block-container {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2rem;
+    border-radius: 20px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
 
-    /* Typography Styling */
-    h1, h2, h3 {
-        color: #102A43;
-        font-weight: 800;
-        letter-spacing: -0.025em;
-    }
-    
-    /* Custom primary button styling */
-    div.stButton > button:first-child {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        color: white;
-        border-radius: 8px;
-        padding: 0.75rem 1.5rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-        border: none;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        width: 100%;
-        margin-top: 1rem;
-    }
-    
-    div.stButton > button:first-child:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    }
+/* Headings */
+h1, h2, h3 {
+    color: #F8FAFC !important;
+    font-weight: 700;
+}
 
-    /* Glassmorphism Result Cards */
-    .glass-card {
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        padding: 1.5rem;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-        animation: slide-up 0.5s ease-out;
-    }
+/* Labels */
+label, .stMarkdown {
+    color: #E2E8F0 !important;
+}
 
-    /* Animations */
-    @keyframes slide-up {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+/* Inputs */
+.stSelectbox div, .stNumberInput div, .stSlider {
+    background-color: #1e293b !important;
+    color: white !important;
+    border-radius: 10px;
+}
 
-    /* Custom Status Badges */
-    .status-badge {
-        display: inline-block;
-        padding: 0.25em 0.75em;
-        font-size: 0.875em;
-        font-weight: 600;
-        border-radius: 9999px;
-    }
-    .badge-safe { background-color: #d1fae5; color: #065f46; }
-    .badge-risk { background-color: #fee2e2; color: #991b1b; }
-    
-    /* Footer */
-    .footer {
-        text-align: center;
-        margin-top: 3rem;
-        padding-top: 1rem;
-        border-top: 1px solid #e2e8f0;
-        color: #64748b;
-        font-size: 0.875rem;
-    }
-    </style>
+/* Button */
+div.stButton > button {
+    background: linear-gradient(135deg, #2563EB, #1E40AF);
+    color: white;
+    border-radius: 12px;
+    font-weight: bold;
+    height: 3em;
+    width: 100%;
+    transition: 0.3s;
+}
+
+div.stButton > button:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 15px rgba(37,99,235,0.5);
+}
+
+/* Result Cards */
+.result-card {
+    background: rgba(30, 41, 59, 0.85);
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    color: white;
+    margin-top: 20px;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background: #020617;
+}
+
+</style>
 """, unsafe_allow_html=True)
 
-
-# ==========================================
-# 3. MODEL LOADING WITH ERROR HANDLING
-# ==========================================
+# ---------------- LOAD MODEL ----------------
 @st.cache_resource
 def load_components():
     with open('rf_model.pkl', 'rb') as file:
@@ -121,88 +94,51 @@ def load_components():
 try:
     model, encoders = load_components()
 except Exception as e:
-    st.error(f"⚠️ **Critical Error:** Unable to load model components. \n\nDetails: {e}")
-    st.info("Ensure 'rf_model.pkl' and 'label_encoders.pkl' exist in the same directory as this script.")
+    st.error(f"Error loading model files: {e}")
     st.stop()
 
+# ---------------- HEADER ----------------
+st.markdown("<h1 style='text-align:center;'>✈️ Smart Travel Customer Retention AI</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#CBD5F5;'>Real-time churn prediction powered by machine learning</p>", unsafe_allow_html=True)
+st.markdown("---")
 
-# ==========================================
-# 4. SIDEBAR DASHBOARD
-# ==========================================
+# ---------------- SIDEBAR ----------------
 with st.sidebar:
-    st.markdown("""
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 12px; height: 12px; background-color: #10B981; border-radius: 50%;"></div>
-            <span style="font-weight: 600; color: #334155;">System Online</span>
-        </div>
-        <br>
-    """, unsafe_allow_html=True)
-    
-    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=80)
-    st.markdown("## ⚙️ Control Panel")
-    
-    st.markdown("---")
-    st.markdown("### 📊 Model Info")
+    st.markdown("### ⚙️ Control Panel")
+    st.write("Enter customer data to predict churn.")
+
+    st.markdown("#### 📊 Model Info")
     st.write("**Algorithm:** Random Forest")
     st.write("**Target:** Customer Retention")
-    
-    with st.expander("ℹ️ Glossary & Info"):
-        st.write("""
-        **Churn Risk:** The calculated likelihood that a customer will abandon the service.
-        * **Low Risk:** < 40%
-        * **Moderate Risk:** 40% - 70%
-        * **High Risk:** > 70%
-        """)
-        
-    st.markdown("---")
-    st.caption("© 2026 Enterprise AI Solutions")
 
+    with st.expander("ℹ️ What is Churn?"):
+        st.write("Customers who stop using services.")
 
-# ==========================================
-# 5. MAIN HEADER & HERO SECTION
-# ==========================================
-col_header1, col_header2 = st.columns([1, 8])
-with col_header1:
-    st.markdown("<h1 style='font-size: 3rem;'>✈️</h1>", unsafe_allow_html=True)
-with col_header2:
-    st.markdown("<h1>Travel Customer Retention AI</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size: 1.1rem; color: #475569; margin-top: -10px;'>Real-time churn probability scoring powered by ensemble machine learning.</p>", unsafe_allow_html=True)
+# ---------------- INPUT SECTION ----------------
+st.markdown("## 👤 Customer Input")
 
-st.markdown("<hr style='border: 1px solid #cbd5e1;'>", unsafe_allow_html=True)
+col1, col2, col3 = st.columns(3)
 
+with col1:
+    age = st.number_input("🎂 Age", 18, 100, 30)
+    frequent_flyer = st.selectbox("✈️ Frequent Flyer", ["Yes", "No"])
 
-# ==========================================
-# 6. INPUT FORMS (Logically Grouped)
-# ==========================================
-st.markdown("### 👤 Input Customer Parameters")
+with col2:
+    annual_income = st.selectbox("💰 Income", ["Low Income", "Middle Income", "High Income"])
+    services_opted = st.slider("🛎️ Services", 1, 10, 2)
 
-# Grouping inputs logically into containers for better UX
-with st.container():
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("#### Demographics & Profile")
-        age = st.number_input("🎂 Age", min_value=18, max_value=100, value=30, help="Customer's current age.")
-        annual_income = st.selectbox("💰 Annual Income", ["Low Income", "Middle Income", "High Income"], index=1)
-        frequent_flyer = st.selectbox("✈️ Frequent Flyer Status", ["Yes", "No"], index=1)
+with col3:
+    social_media = st.selectbox("📱 Social Media", ["Yes", "No"])
+    booked_hotel = st.selectbox("🏨 Booked Hotel", ["Yes", "No"])
 
-    with col2:
-        st.markdown("#### Engagement & Behavior")
-        services_opted = st.slider("🛎️ Services Opted", min_value=1, max_value=10, value=2, help="Total number of add-on services utilized.")
-        social_media = st.selectbox("📱 Social Media Synced", ["Yes", "No"], index=1)
-        booked_hotel = st.selectbox("🏨 Booked Hotel", ["Yes", "No"], index=1)
+st.markdown("")
 
+# ---------------- PREDICTION ----------------
+if st.button("🚀 Analyze Risk"):
 
-# ==========================================
-# 7. PREDICTION ENGINE & VISUALIZATION
-# ==========================================
-if st.button("Initialize Prediction Analysis"):
-    
-    # Premium loading state
-    with st.spinner('Aggregating data and computing ensemble predictions...'):
-        time.sleep(1.2) # Smooth UI transition
-        
-    # Prepare Dataframe
+    with st.spinner("Analyzing..."):
+        time.sleep(1)
+
     input_data = pd.DataFrame({
         'Age': [age],
         'FrequentFlyer': [frequent_flyer],
@@ -211,86 +147,48 @@ if st.button("Initialize Prediction Analysis"):
         'AccountSyncedToSocialMedia': [social_media],
         'BookedHotelOrNot': [booked_hotel]
     })
-    
+
     try:
-        # Encode inputs safely
         for col in ['FrequentFlyer', 'AnnualIncomeClass', 'AccountSyncedToSocialMedia', 'BookedHotelOrNot']:
             input_data[col] = encoders[col].transform(input_data[col])
-            
-        # Execute ML Prediction
+
         prediction = model.predict(input_data)[0]
         probability = model.predict_proba(input_data)[0][1]
-        
-        # UI Rendering for Results
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 📈 Analysis Results")
-        
-        res_col1, res_col2 = st.columns([1, 1.5])
-        
-        # COLUMN 1: The Verdict Card
-        with res_col1:
+
+        st.markdown("## 📊 Results")
+
+        colA, colB = st.columns([1, 2])
+
+        # Result Card
+        with colA:
             if prediction == 1:
                 st.markdown(f"""
-                <div class="glass-card" style="border-top: 6px solid #ef4444;">
-                    <div class="status-badge badge-risk" style="margin-bottom: 10px;">ACTION REQUIRED</div>
-                    <h2 style="color: #991b1b; margin-top: 0;">High Churn Risk</h2>
-                    <p style="color: #475569;">This customer exhibits behavioral patterns strongly correlated with account abandonment.</p>
+                <div class="result-card" style="border-top: 5px solid #EF4444;">
+                    <h2>🚨 HIGH RISK</h2>
+                    <p>Customer likely to churn</p>
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown(f"""
-                <div class="glass-card" style="border-top: 6px solid #10b981;">
-                    <div class="status-badge badge-safe" style="margin-bottom: 10px;">HEALTHY ACCOUNT</div>
-                    <h2 style="color: #065f46; margin-top: 0;">Customer Retained</h2>
-                    <p style="color: #475569;">This customer shows high loyalty indicators and is unlikely to churn in the near term.</p>
+                <div class="result-card" style="border-top: 5px solid #10B981;">
+                    <h2>✅ SAFE</h2>
+                    <p>Customer likely to stay</p>
                 </div>
                 """, unsafe_allow_html=True)
                 st.balloons()
-                
-        # COLUMN 2: Data Metrics
-        with res_col2:
-            st.markdown("""
-            <div class="glass-card">
-                <h4 style="margin-top: 0; color: #334155;">Probability Breakdown</h4>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Using Streamlit's native metric component for a SaaS look
-            met_col1, met_col2 = st.columns(2)
-            with met_col1:
-                st.metric(
-                    label="Churn Probability", 
-                    value=f"{probability:.1%}", 
-                    delta="Critical Risk" if probability > 0.6 else "Stable",
-                    delta_color="inverse"
-                )
-            with met_col2:
-                st.metric(
-                    label="Retention Probability", 
-                    value=f"{(1 - probability):.1%}", 
-                    delta="Optimal" if (1 - probability) > 0.6 else "Warning"
-                )
-            
-            # Visual Progress Bar
-            st.caption("Risk Indicator Tracker")
-            if probability >= 0.7:
-                st.progress(float(probability))
-                st.error("🚨 Immediate intervention recommended.")
-            elif probability >= 0.4:
-                st.progress(float(probability))
-                st.warning("⚠️ Monitor customer engagement closely.")
+
+        # Probability Section
+        with colB:
+            st.subheader("Churn Probability")
+
+            st.progress(float(probability))
+
+            if probability > 0.7:
+                st.error(f"High Risk: {probability:.1%}")
+            elif probability > 0.4:
+                st.warning(f"Moderate Risk: {probability:.1%}")
             else:
-                st.progress(float(probability))
-                st.success("✅ Customer health score is optimal.")
+                st.success(f"Low Risk: {probability:.1%}")
 
     except Exception as e:
-        st.error(f"Prediction Pipeline Error: {e}")
-
-# ==========================================
-# 8. FOOTER
-# ==========================================
-st.markdown("""
-    <div class="footer">
-        Powered by Streamlit & Scikit-Learn | Designed for high-performance ML deployments.
-    </div>
-""", unsafe_allow_html=True)
+        st.error(f"Error: {e}")
